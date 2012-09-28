@@ -1,0 +1,93 @@
+/**
+ * @file   napster.c
+ * @Author Anjan Karanam 
+ * @date   September, 2012
+ * @brief  Definition for Napster interface. 
+ *
+ * Implementation of Napster's client interface functionality.
+ */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "napster.h"
+
+static const char* FILE_LIST = "napster_server_files.list";
+
+int addFile(char* filename, char* client)
+{
+	FILE* fp;
+	fp = fopen(FILE_LIST, "a+");
+	char* fileEntry = malloc((strlen(client)+strlen(filename)+2)*sizeof(char));
+	strcat(fileEntry,filename);
+	strcat(fileEntry," ");
+	strcat(fileEntry,client);
+	strcat(fileEntry,"\n");
+
+	if (fp)
+	{
+		printf("File exists\n");
+	}
+	else
+	{
+		printf("File does not exist, creating...\n");
+		fp = fopen(FILE_LIST, "w");
+	}
+	int success = fprintf(fp, "%s", fileEntry);
+	fclose(fp);
+	free(fileEntry);
+	return success < 0 ? 0 : 1;
+}
+
+int deleteFile(char* filename, char* client)
+{
+	FILE* fp_old;
+	FILE* fp_new;
+	int fileFoundFlag = 0;
+	fp_old = fopen(FILE_LIST, "r+");
+	fp_new = fopen("temp.list", "a+");
+	char* fileEntry = malloc((strlen(client)+strlen(filename)+2)*sizeof(char));
+	strcat(fileEntry,filename);
+	strcat(fileEntry," ");
+	strcat(fileEntry,client);
+	strcat(fileEntry,"\n");
+
+	// To delete, we will scan through the file and add every line to a new file, EXCEPT for the line which is to be deleted
+	// We will then delete the old file and rename the new file
+	
+	if (fp_old != NULL)
+	{
+		// Copy lines
+		char line[128];
+		while (fgets(line, 128, fp_old) != NULL)
+		{
+			if (strcmp(line, fileEntry) != 0)
+				fprintf(fp_new, "%s", line);
+			else
+				fileFoundFlag = 1;
+		}
+
+		// Delete old file
+		//remove(FILE_LIST);
+		
+		// Rename new file
+		rename("temp.list", FILE_LIST);
+	}
+
+	free(fileEntry);
+	return fileFoundFlag;
+}
+
+void viewFiles()
+{
+	printf("Viewing files...\n");
+}
+
+
+/**
+ * Here, we are going to take the client's input and do something meaningful with it.
+ */
+/*
+void parse(char* input)
+{
+	printf("TODO\n");
+}*/
