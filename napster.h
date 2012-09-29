@@ -25,6 +25,6 @@ int deleteFile(char* filename, char* client);
 /**
  * Interface to display all files that are present for downloading on the Napster server.
  */
-void viewFiles();
+void viewFiles(int clntSocket);
 
 #endif

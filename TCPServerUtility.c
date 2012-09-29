@@ -59,7 +59,7 @@ int SetupTCPServerSocket(const char *service) {
 }
 
 
-void testSendSize(int clntSock)
+void viewFiles(int clntSock)
 {
 	FILE* fp = fopen(FILE_LIST, "rt");
 	char line[80];
@@ -109,18 +109,91 @@ void testSendSize(int clntSock)
 			{
 				strcat(list, line);
 			}
-			printf("Current line: %s\n", list);
 		}
+
+		if (strcmp(list,"") == 0)
+			list = "Central server file list is empty!";
 
 		numBytesSent = send(clntSock, list, strlen(list), 0);
 		if (numBytesSent < 0)
 			DieWithSystemMessage("send() failed");
 		else if (numBytesSent != strlen(list))
 			DieWithUserMessage("send()", "sent unexpected number of bytes");
-		free(list);
 	}
 	else
 		printf("Error listing files\n");
+}
+
+int addFile(char* filename, char* client)
+{
+	FILE* fp;
+	fp = fopen(FILE_LIST, "a+");
+	char* fileEntry = malloc((strlen(client)+strlen(filename)+2)*sizeof(char));
+	strcat(fileEntry,filename);
+	strcat(fileEntry," ");
+	strcat(fileEntry,client);
+	strcat(fileEntry,"\n");
+
+	if (fp)
+	{
+		printf("File exists\n");
+	}
+	else
+	{
+		printf("File does not exist, creating...\n");
+		fp = fopen(FILE_LIST, "w");
+	}
+	int success = fprintf(fp, "%s", fileEntry);
+	fclose(fp);
+	free(fileEntry);
+	return success < 0 ? 0 : 1;
+}
+
+int deleteFile(char* filename, char* client)
+{
+	FILE* fp_old;
+	FILE* fp_new;
+	int fileFoundFlag = 0;
+	fp_old = fopen(FILE_LIST, "r+");
+	fp_new = fopen("temp.list", "w");
+	char* fileEntry = malloc((strlen(client)+strlen(filename)+2)*sizeof(char));
+	strcat(fileEntry,filename);
+	strcat(fileEntry," ");
+	strcat(fileEntry,client);
+	strcat(fileEntry,"\n");
+
+	// To delete, we will scan through the file and add every line to a new file, EXCEPT for the line which is to be deleted
+	// We will then delete the old file and rename the new file
+	
+	if (fp_old != NULL)
+	{
+		// Copy lines
+		char line[128];
+		while (fgets(line, 128, fp_old) != NULL)
+		{
+			if (strcmp(line, fileEntry) != 0)
+			{
+				printf("Not deleting: %s\n",line);
+				fprintf(fp_new, "%s", line);
+			}
+			else
+			{
+				printf("Deleting: %s\n", line);
+				fileFoundFlag = 1;
+			}
+		}
+
+		// Delete old file
+		remove(FILE_LIST);
+		
+		// Rename new file
+		rename("temp.list", FILE_LIST);
+	}
+	fclose(fp_old);
+	fclose(fp_new);
+
+	free(fileEntry);
+	return fileFoundFlag;
 }
 
 int AcceptTCPConnection(int servSock) {
@@ -174,7 +247,7 @@ void HandleTCPClient(int clntSocket, char* clntName) {
 					break;
 			case DELETEFILE: printf("Status of delete: %d\n",deleteFile(filename, clntName));
 					break;
-			case LISTFILES: testSendSize(clntSocket);
+			case LISTFILES: viewFiles(clntSocket);
 					break;
 		}
 

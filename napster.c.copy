@@ -44,7 +44,7 @@ int deleteFile(char* filename, char* client)
 	FILE* fp_new;
 	int fileFoundFlag = 0;
 	fp_old = fopen(FILE_LIST, "r+");
-	fp_new = fopen("temp.list", "a+");
+	fp_new = fopen("temp.list", "w");
 	char* fileEntry = malloc((strlen(client)+strlen(filename)+2)*sizeof(char));
 	strcat(fileEntry,filename);
 	strcat(fileEntry," ");
@@ -61,17 +61,25 @@ int deleteFile(char* filename, char* client)
 		while (fgets(line, 128, fp_old) != NULL)
 		{
 			if (strcmp(line, fileEntry) != 0)
+			{
+				printf("Not deleting: %s\n",line);
 				fprintf(fp_new, "%s", line);
+			}
 			else
+			{
+				printf("Deleting: %s\n", line);
 				fileFoundFlag = 1;
+			}
 		}
 
 		// Delete old file
-		//remove(FILE_LIST);
+		remove(FILE_LIST);
 		
 		// Rename new file
 		rename("temp.list", FILE_LIST);
 	}
+	fclose(fp_old);
+	fclose(fp_new);
 
 	free(fileEntry);
 	return fileFoundFlag;

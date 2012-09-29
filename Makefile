@@ -1,8 +1,8 @@
 cc = gcc
 CFLAGS = -std=gnu99 -pedantic -Wall -Werror
 RELEASE_FLAGS = -O2
-SERVER_FILES = AddressUtility.c DieWithMessage.c TCPEchoServer4.c TCPServerUtility.c napster.c
-CLIENT_FILES = TCPEchoClient4.c DieWithMessage.c TCPServerUtility.c AddressUtility.c napster.c
+SERVER_FILES = AddressUtility.c DieWithMessage.c TCPEchoServer4.c TCPServerUtility.c
+CLIENT_FILES = TCPEchoClient4.c DieWithMessage.c TCPServerUtility.c AddressUtility.c
 
 server : $(SERVER_FILES)
 	$(cc) $(CFLAGS) $(SERVER_FILES) -o EchoServer4
