@@ -9,7 +9,7 @@
 #include "Practical.h"
 #include "state.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_STRING_SIZE 50
 #define HELP_STR "addfile - Add a file to the Napster server for sharing (usage: addfile <filename>)\naddfile -d - Stop sharing a file by having the server un-index it. (usage:addfile -d <file to be deleted>)\nfilelist - Display all files that are available for download\nhelp - Print this dialog\nquit - Exit Napster client\n"
 
@@ -72,14 +72,13 @@ void parse(char* input)
 }
 
 int main(int argc, char *argv[]) {
-  if (argc < 3 || argc > 4) // Test for correct number of arguments
+  if (argc < 2 || argc > 3) // Test for correct number of arguments
     DieWithUserMessage("Parameter(s)",
-        "<Server Address> <Echo Word> [<Server Port>]");
+        "<Server Address> [<Server Port>]");
   char *servIP = argv[1];     // First arg: server IP address (dotted quad)
-  char *echoString = argv[2]; // Second arg: string to echo
-
-  // Third arg (optional): server port (numeric).  7 is well-known echo port
-  in_port_t servPort = (argc == 4) ? atoi(argv[3]) : 7;
+  
+// Third arg (optional): server port (numeric).  7 is well-known echo port
+  in_port_t servPort = (argc == 3) ? atoi(argv[2]) : 7;
 
   // Create a reliable, stream socket using TCP
   int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -102,7 +101,7 @@ int main(int argc, char *argv[]) {
 	if (connect(sock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
 		DieWithSystemMessage("connect() failed");
 
-	size_t echoStringLen = strlen(echoString); // Determine input length
+	size_t echoStringLen; // Determine input length
 
 	printf("Napster Client. Type \"help\" at any time for more options.\n");
 	// Begin interactive Napster shell
@@ -216,33 +215,6 @@ int main(int argc, char *argv[]) {
 		
 		STATE = SHELL;
 	}
-
-  // Send the string to the server TODO:CHANGE
-	
-  ssize_t numBytes = send(sock, echoString, echoStringLen, 0);
-  if (numBytes < 0)
-    DieWithSystemMessage("send() failed");
-  else if (numBytes != echoStringLen)
-    DieWithUserMessage("send()", "sent unexpected number of bytes");
-
-  // Receive the same string back from the server
-  unsigned int totalBytesRcvd = 0; // Count of total bytes received
-  fputs("Received: ", stdout);     // Setup to print the echoed string
-  while (totalBytesRcvd < echoStringLen) {
-    char buffer[BUFSIZE]; // I/O buffer
-    /* Receive up to the buffer size (minus 1 to leave space for
-     a null terminator) bytes from the sender */
-    numBytes = recv(sock, buffer, BUFSIZE - 1, 0);
-    if (numBytes < 0)
-      DieWithSystemMessage("recv() failed");
-    else if (numBytes == 0)
-      DieWithUserMessage("recv()", "connection closed prematurely");
-    totalBytesRcvd += numBytes; // Keep tally of total bytes
-    buffer[numBytes] = '\0';    // Terminate the string!
-    fputs(buffer, stdout);      // Print the echo buffer
-  }
-
-  fputc('\n', stdout); // Print a final linefeed
 
   close(sock);
   exit(0);

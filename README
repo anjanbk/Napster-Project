@@ -1,0 +1,52 @@
+1) Setup instructions
+To compile the client, run
+	make client
+
+To compile the server, run
+	make server
+
+Then, to run server, run 
+	./EchoServer4 <port name>
+
+Finally, to run the client, run
+	./EchoClient4 <server address> <server port>
+
+2) Run "help" for available commands
+
+3) How the protocol was implemented:
+	I used the templates provided by the textbook.
+
+	The client uses a state machine, which governs the actions that are executed. By default, the state is in the SHELL state, or the interactive shell.
+	The client parses the input by the user, and accordingly sends a payload string to the server.
+	The payload string consists of the state, followed by the file (if applicable).
+	A sample payload string would be "1file.mp3", which tells the server to add the file "file.mp3" (because 1 is the numeric value of the ADD state enumeration).
+	
+	Adding a file:
+	1) Client sends payload "1filename.filetype" to server
+	2) Server receives payload and sends back an acknowledgement echo to the client
+	3) Server, then, reads the first character to determine the state.
+	4) Server, then takes the rest of the payload string (which is the file name), and adds it to a text file (stored in the server).
+		The text file is my version of a persistent data store, which was used so that in the event the server crashes, the central list isn't lost.
+	5) Server wait for client's next command...
+
+	Deleting a file:
+	1) Client sends payload "2filenamd.filetype" to server
+	2) Server receives payload and sends back an acknowledgement echo to the client
+	3) Server, then, reads the first character to determine the state.
+	4) Server, then reads through the file list and writes all entries into a temporary file EXCEPT the one that is to be deleted.
+	5) The old file list is then deleted, and the temp list is renamed to the old filelist name
+	6) Server waits for client's next command...
+
+	Listing files:
+	1) Client sends payload "3" to server
+	2) Server receives the payload and sends back the size of the list file
+	3) Client then instantiates a buffer of appropriate size, using the size that the server sent it, and sends an "ACK" acknowledgement
+	4) Server then sends the file list to the client
+	5) Client displays the file list
+	6) Server waits for client's next command...
+
+
+4) Things I took care of,
+	filelist on an empty list
+	Trying to delete a file that doesn't exist
+	Invalid input (syntax errors) in the shell
